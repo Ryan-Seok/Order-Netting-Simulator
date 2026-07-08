@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퉁치기 계산 대시보드</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 1. RESET & BASIC SETUP */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Urbanist', 'Noto Sans KR', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 2. MAIN DASHBOARD CONTAINER */
+        .dashboard-container {
+            background-color: #1e293b;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 1280px;
+            height: 760px; /* 고정 높이 */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 상단 그라데이션 라인 (매도-파랑, MOC-주황, 매수-빨강) */
+        .dashboard-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 5px;
+            background: linear-gradient(90deg, #3b82f6, #f59e0b, #ef4444);
+            z-index: 10;
+        }
+
+        /* 3. HEADER */
+        .header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .header h1 { font-size: 28px; display: flex; align-items: center; gap: 12px; }
+        .header h1 i { color: #6366f1; }
+        .header p { color: #94a3b8; font-size: 14px; }
+
+        /* 4. GRID LAYOUT */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr 280px; /* 우측 패널 폭 380px -> 280px 로 축소, 중앙 패널 확대 */
+            gap: 20px;
+            padding: 20px 30px;
+            height: calc(100% - 90px);
+        }
+
+        .panel {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background-color: #1e293b;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-weight: 700;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* 5. INPUT PANEL COMPONENTS */
+        .panel-body-inputs {
+            padding: 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-section {
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #1e293b;
+        }
+        
+        /* 색상 매핑: 매도(파랑), MOC(주황), 매수(빨강) */
+        .input-section.sell-loc { border-left: 3px solid #3b82f6; }
+        .input-section.sell-moc { border-left: 3px solid #f59e0b; }
+        .input-section.buy-order { border-left: 3px solid #ef4444; }
+
+        .section-title {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .input-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+        .input-row:last-child { margin-bottom: 0; }
+        
+        .label-cell { width: 50px; font-size: 11px; color: #64748b; text-align: center; }
+        
+        input {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            color: #f8fafc;
+            padding: 6px 8px;
+            font-size: 13px;
+            width: 100%;
+            text-align: right;
+            font-family: 'Urbanist', sans-serif;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: #6366f1; }
+        input:disabled { background: rgba(0,0,0,0.2); border: 1px dashed #475569; color: #64748b; text-align: center; }
+
+        /* 스피너(화살표) 제거하여 키보드로만 입력하게 설정 */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .btn-calc {
+            background: #6366f1;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            margin: 0 15px 15px 15px;
+        }
+        .btn-calc:hover { background: linear-gradient(135deg, #4f46e5, #4338ca); }
+        .btn-calc:active { transform: scale(0.98); }
+
+        /* 6. FLOW PANEL COMPONENTS */
+        .flow-container {
+            padding: 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .log-box {
+            background: #1e293b;
+            border-left: 3px solid #475569;
+            padding: 10px 12px;
+            border-radius: 0 4px 4px 0;
+            font-size: 13px;
+            color: #e2e8f0;
+            line-height: 1.5;
+            animation: slideIn 0.3s ease-out;
+        }
+        .log-box strong { color: #f8fafc; font-weight: 700; }
+        .log-box.match { border-left-color: #6366f1; background: rgba(99, 102, 241, 0.05); }
+        .log-box.skip { border-left-color: #475569; background: rgba(71, 85, 105, 0.05); }
+        .log-box.final { border-left-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* 7. OUTPUT PANEL COMPONENTS */
+        .table-container {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #1e293b; color: #94a3b8; font-size: 11px; padding: 10px 15px; position: sticky; top: 0; border-bottom: 1px solid #334155; }
+        td { padding: 12px 15px; border-bottom: 1px solid #1e293b; font-size: 14px; font-weight: 500; }
+        
+        /* 테이블 열 너비 비율 및 정렬 조정, 줄바꿈 방지(nowrap) 적용 */
+        th:first-child, td:first-child { text-align: left; width: 30%; white-space: nowrap; }
+        th:nth-child(2), td:nth-child(2) { text-align: center; width: 50%; }
+        th:last-child, td:last-child { text-align: right; width: 20%; }
+        
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 6px; }
+        
+        /* 뱃지 및 텍스트 색상: 매도(파랑), 매수(빨강) */
+        .bg-sell { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .bg-buy { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .c-sell { color: #3b82f6; }
+        .c-buy { color: #ef4444; }
+
+        .info-footer {
+            background: #1e293b;
+            padding: 12px 15px;
+            font-size: 11px;
+            color: #94a3b8;
+            border-top: 1px solid #334155;
+            flex-shrink: 0;
+            line-height: 1.4;
+        }
+
+        /* 8. SCROLLBARS */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Empty States */
+        .empty-state { text-align: center; color: #64748b; margin-top: 50%; transform: translateY(-50%); font-size: 13px; }
+        .empty-state i { font-size: 24px; margin-bottom: 10px; opacity: 0.5; }
+
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <!-- HEADER -->
+    <div class="header">
+        <h1><i class="fa-solid fa-calculator"></i> Order Netting Simulator</h1>
+        <p>퉁치기 알고리즘 실시간 연산기</p>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="content-grid">
+        
+        <!-- PANEL 1: INPUTS -->
+        <div class="panel">
+            <div class="panel-header">
+                <i class="fa-solid fa-keyboard"></i> 주문 데이터 입력
+            </div>
+            
+            <div class="panel-body-inputs">
+                <!-- Sell LOC 8 -->
+                <div class="input-section sell-loc">
+                    <div class="section-title">
+                        <span style="color:#3b82f6; font-weight:700;">매도 주문 (LOC)</span>
+                        <span>Price / Qty</span>
+                    </div>
+                    <!-- 1~8 Rows -->
+                    <div class="input-row"><div class="label-cell">LOC 1</div><input type="number" id="loc-p1" step="0.01"><input type="number" id="loc-q1"></div>
+                    <div class="input-row"><div class="label-cell">LOC 2</div><input type="number" id="loc-p2" step="0.01"><input type="number" id="loc-q2"></div>
+                    <div class="input-row"><div class="label-cell">LOC 3</div><input type="number" id="loc-p3" step="0.01"><input type="number" id="loc-q3"></div>
+                    <div class="input-row"><div class="label-cell">LOC 4</div><input type="number" id="loc-p4" step="0.01"><input type="number" id="loc-q4"></div>
+                    <div class="input-row"><div class="label-cell">LOC 5</div><input type="number" id="loc-p5" step="0.01"><input type="number" id="loc-q5"></div>
+                    <div class="input-row"><div class="label-cell">LOC 6</div><input type="number" id="loc-p6" step="0.01"><input type="number" id="loc-q6"></div>
+                    <div class="input-row"><div class="label-cell">LOC 7</div><input type="number" id="loc-p7" step="0.01"><input type="number" id="loc-q7"></div>
+                    <div class="input-row"><div class="label-cell">LOC 8</div><input type="number" id="loc-p8" step="0.01"><input type="number" id="loc-q8"></div>
+                </div>
+
+                <!-- Sell MOC -->
+                <div class="input-section sell-moc">
+                    <div class="section-title">
+                        <span style="color:#f59e0b; font-weight:700;">MOC 매도</span>
+                        <span>Qty</span>
+                    </div>
+                    <div class="input-row">
+                        <div class="label-cell">MKT</div>
+                        <input type="text" value="Market Price" disabled>
+                        <input type="number" id="moc-q">
+                    </div>
+                </div>
+
+                <!-- Buy Order -->
+                <div class="input-section buy-order">
+                    <div class="section-title">
+                        <span style="color:#ef4444; font-weight:700;">매수 주문 (LOC)</span>
+                        <span>Price / Qty</span>
+                    </div>
+                    <div class="input-row">
+                        <div class="label-cell">LOC</div>
+                        <input type="number" id="buy-p" step="0.01">
+                        <input type="number" id="buy-q">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execute Button -->
+            <button class="btn-calc" id="run-btn">
+                <i class="fa-solid fa-play"></i> 퉁치기 연산 실행
+            </button>
+        </div>
+
+        <!-- PANEL 2: PROCESS FLOW -->
+        <div class="panel">
+            <div class="panel-header">
+                <i class="fa-solid fa-bolt"></i> 연산 흐름 (Process Flow)
+                <span id="status-badge" style="margin-left:auto; font-size:11px; color:#64748b; font-weight:400;">대기 중</span>
+            </div>
+            <div class="flow-container" id="flow-log">
+                <div class="empty-state">
+                    <i class="fa-solid fa-arrow-left"></i><br>좌측에서 값을 설정하고<br>계산 버튼을 클릭하세요.
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL 3: FINAL OUTPUT -->
+        <div class="panel">
+            <div class="panel-header">
+                <i class="fa-solid fa-table-list"></i> 최종 주문표 (Output)
+            </div>
+            <div class="table-container">
+                <table id="result-table">
+                    <thead>
+                        <tr>
+                            <th>Side / Type</th>
+                            <th>Price</th>
+                            <th>Qty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3" style="text-align: center; color: #475569; padding-top: 40px; font-size: 13px;">No Results</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="info-footer">
+                <i class="fa-solid fa-circle-info" style="color:#3b82f6;"></i> 상쇄(퉁치기)된 물량은 시장 체결 보장을 위해 <strong>±$0.01</strong> 마진이 추가되어 분할 생성됩니다.
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- JAVASCRIPT LOGIC                           -->
+<!-- ========================================== -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const runBtn = document.getElementById('run-btn');
+    
+    runBtn.addEventListener('click', () => {
+        try {
+            executeNettingAlgorithm();
+        } catch(e) {
+            console.error(e);
+            document.getElementById('status-badge').innerHTML = '<span style="color:#ef4444;">오류 발생</span>';
+        }
+    });
+});
+
+function executeNettingAlgorithm() {
+    // 1. UI 초기화 및 로딩 피드백
+    const flowLog = document.getElementById('flow-log');
+    const tableBody = document.querySelector('#result-table tbody');
+    const statusBadge = document.getElementById('status-badge');
+    
+    flowLog.innerHTML = '';
+    statusBadge.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 계산 중...';
+    statusBadge.style.color = '#6366f1';
+
+    // 2. 입력 데이터 수집
+    let sellOrders = [];
+    
+    // MOC 읽기
+    const mocQty = parseInt(document.getElementById('moc-q').value);
+    if (!isNaN(mocQty) && mocQty > 0) {
+        sellOrders.push({ side: "Sell", type: "MOC", price: 0, quantity: mocQty });
+    }
+
+    // LOC 1~8 읽기
+    for (let i = 1; i <= 8; i++) {
+        let p = parseFloat(document.getElementById('loc-p' + i).value);
+        let q = parseInt(document.getElementById('loc-q' + i).value);
+        if (!isNaN(p) && !isNaN(q) && q > 0) {
+            sellOrders.push({ side: "Sell", type: "LOC", price: p, quantity: q });
+        }
+    }
+
+    // Buy 읽기
+    const buyPrice = parseFloat(document.getElementById('buy-p').value) || 0;
+    let buyQty = parseInt(document.getElementById('buy-q').value) || 0;
+    let buyOrder = { side: "Buy", type: "LOC", price: buyPrice, quantity: buyQty };
+
+    // 3. 퉁치기 알고리즘 실행 변수
+    let logs = [];
+    let newSellOrders = [];
+    let newBuyOrders = [];
+    let matchedMocQty = 0;
+    let matchedLocQty = 0;
+
+    // --- STEP 1: 주문 인식 ---
+    logs.push(`<div class="log-box"><strong style="color:#ef4444;">[1단계: 주문 접수]</strong><br>기준 매수: <strong>$${buyPrice.toFixed(2)}</strong> / <strong>${buyQty}개</strong>를 퉁치기 연산의 기준으로 설정합니다.</div>`);
+
+    // --- STEP 2: MOC 매칭 (최우선) ---
+    let sellMoc = sellOrders.find(o => o.type === "MOC");
+    if (sellMoc) {
+        logs.push(`<div class="log-box" style="border-left-color: #f59e0b;"><strong style="color:#f59e0b;">[2단계: MOC 최우선 매칭]</strong><br>시장가(MOC) 매도 주문은 가격에 관계없이 무조건 1순위로 상쇄됩니다.</div>`);
+        if (sellMoc.quantity >= buyOrder.quantity) {
+            matchedMocQty = buyOrder.quantity;
+            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">MOC MATCH</span> <strong>${sellMoc.quantity}개</strong>가 기준 매수 전량을 상쇄했습니다. (매수 잔량: 0)</div>`);
+            if (sellMoc.quantity > buyOrder.quantity) {
+                newSellOrders.push({ side: "Sell", type: "MOC", price: 0, quantity: sellMoc.quantity - buyOrder.quantity });
+            }
+            buyOrder.quantity = 0;
+        } else {
+            matchedMocQty = sellMoc.quantity;
+            buyOrder.quantity -= sellMoc.quantity;
+            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">MOC MATCH</span> <strong>${sellMoc.quantity}개</strong> 상쇄 완료. (남은 매수: <strong>${buyOrder.quantity}개</strong>)</div>`);
+        }
+    }
+
+    // --- STEP 3: LOC 매칭 (필터링 및 정렬) ---
+    logs.push(`<div class="log-box" style="border-left-color: #3b82f6;"><strong style="color:#3b82f6;">[3단계: LOC 가격 필터링 및 정렬]</strong><br>매수가($${buyOrder.price.toFixed(2)}) 이하인 매도 주문만 골라, <strong>가장 저렴한 가격부터 오름차순으로 정렬</strong>합니다.</div>`);
+    
+    let filteredSellLocs = [];
+    sellOrders.filter(o => o.type === "LOC").forEach(o => {
+        if (o.price <= buyOrder.price) {
+            filteredSellLocs.push(o);
+        } else {
+            newSellOrders.push(o);
+            logs.push(`<div class="log-box skip">↳ <span class="badge bg-sell">SKIP</span> 매도 $${o.price.toFixed(2)} (${o.quantity}개) : 매수가 초과로 퉁치기 제외.</div>`);
+        }
+    });
+
+    // 핵심: 가격이 싼 매도부터 매칭하도록 오름차순 정렬
+    filteredSellLocs.sort((a, b) => a.price - b.price);
+
+    let rank = 1;
+    for (let sellOrder of filteredSellLocs) {
+        if (buyOrder.quantity === 0) {
+            newSellOrders.push(sellOrder);
+            logs.push(`<div class="log-box skip">↳ <span class="badge bg-sell">SKIP</span> 매도 $${sellOrder.price.toFixed(2)} (${sellOrder.quantity}개) : 매수 잔량이 없어 퉁치기 제외.</div>`);
+            continue;
+        }
+
+        logs.push(`<div class="log-box" style="border-left-color: transparent; padding-top: 5px; padding-bottom: 0;"><span style="color:#94a3b8; font-size: 11px;">[${rank}순위 매칭 : 현재 최저가 $${sellOrder.price.toFixed(2)} 탐색]</span></div>`);
+        rank++;
+
+        if (sellOrder.quantity >= buyOrder.quantity) {
+            newBuyOrders.push({ side: "Buy", type: "LOC", price: sellOrder.price - 0.01, quantity: buyOrder.quantity });
+            matchedLocQty += buyOrder.quantity;
+            
+            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">LOC MATCH</span> 최저가 <strong>$${sellOrder.price.toFixed(2)}</strong> 물량으로 남은 매수 <strong>${buyOrder.quantity}개</strong> 전량 상쇄 완료.</div>`);
+            
+            if (sellOrder.quantity > buyOrder.quantity) {
+                newSellOrders.push({ side: "Sell", type: "LOC", price: sellOrder.price, quantity: sellOrder.quantity - buyOrder.quantity });
+            }
+            buyOrder.quantity = 0;
+        } else {
+            newBuyOrders.push({ side: "Buy", type: "LOC", price: sellOrder.price - 0.01, quantity: sellOrder.quantity });
+            matchedLocQty += sellOrder.quantity;
+            buyOrder.quantity -= sellOrder.quantity;
+            
+            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">LOC MATCH</span> 최저가 <strong>$${sellOrder.price.toFixed(2)}</strong> 매도 <strong>${sellOrder.quantity}개</strong> 상쇄. (남은 매수: <strong>${buyOrder.quantity}개</strong>)</div>`);
+        }
+    }
+
+    // --- STEP 4: 잔량 처리 및 안전 주문 생성 ---
+    logs.push(`<div class="log-box" style="border-left-color: #10b981; margin-top: 15px;">
+        <strong style="color:#10b981; font-size: 14px;">[4단계: 최종 정산 및 안전 마진(Lock) 적용]</strong><br>
+        <span style="font-size: 12px; color: #94a3b8;">내부에서 상쇄(퉁치기)된 물량들이 실제 시장에서 어긋나지 않고 최우선으로 상호 체결되도록 가격에 안전장치를 겁니다.</span>
+    </div>`);
+    
+    let totalMatched = matchedMocQty + matchedLocQty;
+
+    if (totalMatched > 0) {
+        let adjPrice = buyOrder.price + 0.01;
+        newSellOrders.push({ side: "Sell", type: "LOC", price: adjPrice, quantity: totalMatched });
+        
+        // 퉁쳐진 물량 구성 내역 생성
+        let breakdownParts = [];
+        if (matchedMocQty > 0) breakdownParts.push(`MOC ${matchedMocQty}개`);
+        if (matchedLocQty > 0) breakdownParts.push(`LOC ${matchedLocQty}개`);
+        let breakdownText = breakdownParts.length > 0 ? ` <span style="color:#94a3b8; font-size:12px;">(${breakdownParts.join(' + ')})</span>` : '';
+
+        logs.push(`<div class="log-box final" style="border-left-color: #3b82f6; padding-top: 12px; padding-bottom: 12px;">
+            <strong style="color: #3b82f6;"><i class="fa-solid fa-shield-halved"></i> 상쇄된 매도 물량 통합 (Sell Lock)</strong><br>
+            <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ 퉁쳐진 매도 물량 총 <strong>${totalMatched}개</strong>${breakdownText}를 하나로 묶습니다.</span><br>
+            <span style="color:#cbd5e1;">↳ 기준 매수가($${buyOrder.price.toFixed(2)})보다 <strong>+$0.01</strong> 높여 <strong>안전 매도($${adjPrice.toFixed(2)})</strong>로 발행하여 시장 노출 시 체결을 보장합니다.</span>
+        </div>`);
+
+        logs.push(`<div class="log-box final" style="border-left-color: #ef4444; padding-top: 12px; padding-bottom: 12px;">
+            <strong style="color: #ef4444;"><i class="fa-solid fa-shield-halved"></i> 상쇄된 매수 물량 쪼개기 (Buy Lock)</strong><br>
+            <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ (3단계 결과) 각각 짝지어진 매도자들의 원래 가격보다 <strong>-$0.01</strong>씩 낮게 설정된 개별 <strong>안전 매수</strong>들로 분할되어 발행됩니다.</span>
+        </div>`);
+    } else {
+        logs.push(`<div class="log-box">↳ 퉁쳐진(상쇄된) 물량이 없어 안전 마진이 적용되지 않았습니다.</div>`);
+    }
+
+    if (buyOrder.quantity > 0) {
+        newBuyOrders.push({ side: "Buy", type: "LOC", price: buyOrder.price, quantity: buyOrder.quantity });
+        logs.push(`<div class="log-box" style="border-left-color: #64748b; padding-top: 12px; padding-bottom: 12px;">
+            <strong style="color: #94a3b8;"><i class="fa-solid fa-box-open"></i> 남은 매수 잔량 (Remain)</strong><br>
+            <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ 퉁치지 못하고 남은 짝 없는 매수 <strong>${buyOrder.quantity}개</strong>는 원본 가격($${buyOrder.price.toFixed(2)})을 그대로 유지합니다.</span>
+        </div>`);
+    }
+
+    // 4. 화면 출력 (약간의 딜레이로 연산 체감 효과)
+    setTimeout(() => {
+        // 흐름 로그 렌더링
+        flowLog.innerHTML = logs.join('');
+        statusBadge.innerHTML = '<i class="fa-solid fa-check"></i> 처리 완료';
+        statusBadge.style.color = '#6366f1';
+
+        // 결과 테이블 렌더링
+        let html = '';
+        
+        // 매도 출력 (내림차순, MOC 텍스트 주황색 강조)
+        newSellOrders.sort((a,b) => b.price - a.price).forEach(o => {
+            let pStr = o.type === "MOC" ? "MKT" : `$${o.price.toFixed(2)}`;
+            let typeStr = o.type === "MOC" ? `<span style="color: #f59e0b; font-weight: 800;">MOC</span>` : o.type;
+            
+            html += `<tr>
+                <td><span class="badge bg-sell">SELL</span> <span style="font-size:12px; color:#94a3b8;">${typeStr}</span></td>
+                <td class="c-sell">${pStr}</td>
+                <td style="font-weight:700;">${o.quantity}</td>
+            </tr>`;
+        });
+        
+        // 매수 출력 (내림차순)
+        newBuyOrders.sort((a,b) => b.price - a.price).forEach(o => {
+            html += `<tr>
+                <td><span class="badge bg-buy">BUY</span> <span style="font-size:12px; color:#94a3b8;">${o.type}</span></td>
+                <td class="c-buy">$${o.price.toFixed(2)}</td>
+                <td style="font-weight:700;">${o.quantity}</td>
+            </tr>`;
+        });
+
+        if (html === '') { 
+            html = '<tr><td colspan="3" style="text-align: center; color: #64748b; padding-top: 20px;">생성된 주문이 없습니다</td></tr>'; 
+        }
+        
+        tableBody.innerHTML = html;
+        
+    }, 150);
+}
+</script>
+
+</body>
+</html>
