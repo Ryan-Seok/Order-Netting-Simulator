@@ -51,11 +51,22 @@
             border-bottom: 1px solid #334155;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
         }
         .header h1 { font-size: 28px; display: flex; align-items: center; gap: 12px; }
         .header h1 i { color: #6366f1; }
         .header p { color: #94a3b8; font-size: 14px; }
+        .version-badge {
+            font-size: 12px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-left: 8px;
+            font-weight: 700;
+            vertical-align: middle;
+            letter-spacing: 0.5px;
+        }
 
         /* 4. GRID LAYOUT */
         .content-grid {
@@ -251,8 +262,13 @@
 <div class="dashboard-container">
     <!-- HEADER -->
     <div class="header">
-        <h1><i class="fa-solid fa-calculator"></i> Order Netting Simulator</h1>
-        <p>퉁치기 알고리즘 실시간 연산기</p>
+        <div>
+            <h1><i class="fa-solid fa-calculator"></i> Order Netting Simulator <span class="version-badge" id="app-version">v1.1.0</span></h1>
+        </div>
+        <div style="text-align: right;">
+            <p>퉁치기 알고리즘 실시간 연산기</p>
+            <p style="font-size: 11px; color: #475569; margin-top: 4px;" id="last-update">Last Update: 2026.07.08 13:00</p>
+        </div>
     </div>
 
     <!-- MAIN GRID -->
