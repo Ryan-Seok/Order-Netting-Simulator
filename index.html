@@ -95,6 +95,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            min-height: 0; /* 내부 콘텐츠가 부모 영역을 넘어갈 때 정상적으로 스크롤되도록 설정 */
         }
 
         .input-section {
@@ -102,6 +103,7 @@
             border-radius: 6px;
             padding: 12px;
             border: 1px solid #1e293b;
+            flex-shrink: 0; /* 내부 입력 폼들이 찌그러지지 않도록 방지 */
         }
         
         /* 색상 매핑: 매도(파랑), MOC(주황), 매수(빨강) */
@@ -162,7 +164,10 @@
             align-items: center;
             gap: 8px;
             transition: all 0.2s;
-            margin: 0 15px 15px 15px;
+            margin: 15px;
+            margin-top: auto; /* 상단 입력창과 분리하여 하단에 고정 */
+            flex-shrink: 0; /* 버튼이 스크롤 영역에 의해 찌그러지거나 겹치지 않도록 강제 방어 */
+            z-index: 10;
         }
         .btn-calc:hover { background: linear-gradient(135deg, #4f46e5, #4338ca); }
         .btn-calc:active { transform: scale(0.98); }
