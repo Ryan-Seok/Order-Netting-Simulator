@@ -29,7 +29,7 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             width: 100%;
             max-width: 1280px;
-            height: 760px; /* 고정 높이 */
+            height: 800px; /* 고정 높이를 늘려 여유 공간 확보 */
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -52,6 +52,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
         .header h1 { font-size: 28px; display: flex; align-items: center; gap: 12px; }
         .header h1 i { color: #6366f1; }
@@ -75,6 +76,7 @@
             gap: 20px;
             padding: 20px 30px;
             height: calc(100% - 90px);
+            flex-grow: 1;
         }
 
         .panel {
@@ -98,22 +100,23 @@
             flex-shrink: 0;
         }
 
-        /* 5. INPUT PANEL COMPONENTS (스크롤 제거 및 콤팩트화) */
+        /* 5. INPUT PANEL COMPONENTS */
         .panel-body-inputs {
             padding: 15px;
-            overflow: hidden; /* 스크롤바 완전 제거 */
-            flex-grow: 1;
+            overflow: hidden; /* 스크롤바 완전히 제거 */
+            flex: 1 1 auto; 
             display: flex;
             flex-direction: column;
-            gap: 10px; /* 기존 15px에서 10px로 축소하여 여백 절약 */
+            gap: 12px; /* 간격 축소하여 공간 최적화 */
+            justify-content: flex-start;
         }
 
         .input-section {
             background: rgba(255,255,255,0.02);
             border-radius: 6px;
-            padding: 10px 12px; /* 기존 12px에서 축소 */
+            padding: 10px 12px; 
             border: 1px solid #1e293b;
-            flex-shrink: 0; 
+            flex-shrink: 0; /* 내부 입력 그룹이 찌그러지지 않도록 방지 */
         }
         
         /* 색상 매핑: 매도(파랑), MOC(주황), 매수(빨강) */
@@ -124,12 +127,12 @@
         .section-title {
             font-size: 12px;
             color: #cbd5e1;
-            margin-bottom: 6px; /* 기존 8px에서 축소 */
+            margin-bottom: 6px;
             display: flex;
             justify-content: space-between;
         }
 
-        .input-row { display: flex; gap: 6px; margin-bottom: 4px; align-items: center; } /* 여백 최소화 */
+        .input-row { display: flex; gap: 6px; margin-bottom: 4px; align-items: center; }
         .input-row:last-child { margin-bottom: 0; }
         
         .label-cell { width: 50px; font-size: 11px; color: #64748b; text-align: center; }
@@ -139,10 +142,10 @@
             border: 1px solid #475569;
             border-radius: 4px;
             color: #f8fafc;
-            padding: 4px 8px; /* 패딩 축소 */
+            padding: 4px 8px;
             font-size: 13px;
             width: 100%;
-            height: 28px; /* 인풋 높이 고정 축소 */
+            height: 26px; /* 높이를 줄여 입력칸을 한 화면에 모두 표시 */
             text-align: right;
             font-family: 'Urbanist', sans-serif;
             transition: border-color 0.2s;
@@ -160,12 +163,12 @@
             -moz-appearance: textfield;
         }
         
-        /* 패널 하단 고정 영역 (버튼 영역 독립 보장) */
+        /* 패널 하단 고정 영역 (버튼이 스크롤 영역과 절대 겹치지 않게 분리) */
         .panel-footer {
-            padding: 12px 15px; /* 패딩 최소화 */
+            padding: 12px 15px;
             background-color: #0f172a;
             border-top: 1px solid #334155;
-            flex-shrink: 0;
+            flex: 0 0 auto; /* 버튼 영역의 크기를 고정하여 스크롤 오버랩 방지 */
             z-index: 10;
         }
 
@@ -175,7 +178,7 @@
             color: white;
             border: none;
             border-radius: 6px;
-            padding: 10px; /* 높이 최적화 */
+            padding: 10px;
             font-size: 15px;
             font-weight: 700;
             cursor: pointer;
@@ -269,11 +272,11 @@
     <!-- HEADER -->
     <div class="header">
         <div>
-            <h1><i class="fa-solid fa-calculator"></i> Order Netting Simulator <span class="version-badge" id="app-version">v1.1.1</span></h1>
+            <h1><i class="fa-solid fa-calculator"></i> Order Netting Simulator <span class="version-badge" id="app-version">v1.1.4</span></h1>
         </div>
         <div style="text-align: right;">
             <p>퉁치기 알고리즘 실시간 연산기</p>
-            <p style="font-size: 11px; color: #475569; margin-top: 4px;" id="last-update">Last Update: 2026.07.08 13:10</p>
+            <p style="font-size: 11px; color: #475569; margin-top: 4px;" id="last-update">Last Update: 2026.07.09 12:15</p>
         </div>
     </div>
 
@@ -331,7 +334,7 @@
                 </div>
             </div>
 
-            <!-- Execute Button (고정 푸터 영역으로 이동) -->
+            <!-- Execute Button (고정 푸터 영역) -->
             <div class="panel-footer">
                 <button class="btn-calc" id="run-btn">
                     <i class="fa-solid fa-play"></i> 퉁치기 연산 실행
@@ -444,21 +447,25 @@ function executeNettingAlgorithm() {
     if (sellMoc) {
         logs.push(`<div class="log-box" style="border-left-color: #f59e0b;"><strong style="color:#f59e0b;">[2단계: MOC 최우선 매칭]</strong><br>시장가(MOC) 매도 주문은 가격에 관계없이 무조건 1순위로 상쇄됩니다.</div>`);
         if (sellMoc.quantity >= buyOrder.quantity) {
+            let remainSell = sellMoc.quantity - buyOrder.quantity;
             matchedMocQty = buyOrder.quantity;
-            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">MOC MATCH</span> <strong>${sellMoc.quantity}개</strong>가 기준 매수 전량을 상쇄했습니다. (매수 잔량: 0)</div>`);
-            if (sellMoc.quantity > buyOrder.quantity) {
-                newSellOrders.push({ side: "Sell", type: "MOC", price: 0, quantity: sellMoc.quantity - buyOrder.quantity });
+            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">MOC MATCH</span> 매도 수량(${sellMoc.quantity}개)이 매수 수량(${buyOrder.quantity}개) 이상이므로 매수 전량 상쇄 완료.<br><span style="color:#94a3b8; font-size:12px; margin-top:4px; display:inline-block;">※ 계산: MOC 매도(${sellMoc.quantity}) - 매수(${buyOrder.quantity}) = MOC 매도 잔량 <strong>${remainSell}개</strong> 분할 발행</span></div>`);
+            
+            if (remainSell > 0) {
+                newSellOrders.push({ side: "Sell", type: "MOC", price: 0, quantity: remainSell });
             }
             buyOrder.quantity = 0;
         } else {
+            let remainBuy = buyOrder.quantity - sellMoc.quantity;
             matchedMocQty = sellMoc.quantity;
-            buyOrder.quantity -= sellMoc.quantity;
-            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">MOC MATCH</span> <strong>${sellMoc.quantity}개</strong> 상쇄 완료. (남은 매수: <strong>${buyOrder.quantity}개</strong>)</div>`);
+            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">MOC MATCH</span> 매도 수량(${sellMoc.quantity}개)이 매수보다 적어 매도 전량 상쇄 완료.<br><span style="color:#94a3b8; font-size:12px; margin-top:4px; display:inline-block;">※ 계산: 매수(${buyOrder.quantity}) - MOC 매도(${sellMoc.quantity}) = 남은 매수 잔량 <strong>${remainBuy}개</strong> 분할 유지</span></div>`);
+            
+            buyOrder.quantity = remainBuy;
         }
     }
 
     // --- STEP 3: LOC 매칭 (필터링 및 정렬) ---
-    logs.push(`<div class="log-box" style="border-left-color: #3b82f6;"><strong style="color:#3b82f6;">[3단계: LOC 가격 필터링 및 정렬]</strong><br>매수가($${buyOrder.price.toFixed(2)}) 이하인 매도 주문만 골라, <strong>가장 저렴한 가격부터 오름차순으로 정렬</strong>합니다.</div>`);
+    logs.push(`<div class="log-box" style="border-left-color: #3b82f6;"><strong style="color:#3b82f6;">[3단계: LOC 가격 필터링 및 정렬]</strong><br>매수가($${buyOrder.price.toFixed(2)}) 이하인 매도 주문만 골라, <strong>가장 저렴한 가격부터 오름차순으로 정렬</strong>하여 매칭합니다.</div>`);
     
     let filteredSellLocs = [];
     sellOrders.filter(o => o.type === "LOC").forEach(o => {
@@ -477,7 +484,7 @@ function executeNettingAlgorithm() {
     for (let sellOrder of filteredSellLocs) {
         if (buyOrder.quantity === 0) {
             newSellOrders.push(sellOrder);
-            logs.push(`<div class="log-box skip">↳ <span class="badge bg-sell">SKIP</span> 매도 $${sellOrder.price.toFixed(2)} (${sellOrder.quantity}개) : 매수 잔량이 없어 퉁치기 제외.</div>`);
+            logs.push(`<div class="log-box skip">↳ <span class="badge bg-sell">SKIP</span> 매도 $${sellOrder.price.toFixed(2)} (${sellOrder.quantity}개) : 매수 잔량이 0이므로 퉁치기 제외.</div>`);
             continue;
         }
 
@@ -485,28 +492,31 @@ function executeNettingAlgorithm() {
         rank++;
 
         if (sellOrder.quantity >= buyOrder.quantity) {
+            let remainSell = sellOrder.quantity - buyOrder.quantity;
             newBuyOrders.push({ side: "Buy", type: "LOC", price: sellOrder.price - 0.01, quantity: buyOrder.quantity });
             matchedLocQty += buyOrder.quantity;
             
-            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">LOC MATCH</span> 최저가 <strong>$${sellOrder.price.toFixed(2)}</strong> 물량으로 남은 매수 <strong>${buyOrder.quantity}개</strong> 전량 상쇄 완료.</div>`);
+            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">LOC MATCH</span> 매도 수량(${sellOrder.quantity}개)이 남은 매수 잔량(${buyOrder.quantity}개) 이상이므로 매수 전량 상쇄 완료.<br><span style="color:#94a3b8; font-size:12px; margin-top:4px; display:inline-block;">※ 계산: LOC 매도(${sellOrder.quantity}) - 매수(${buyOrder.quantity}) = 매도 잔량 <strong>${remainSell}개</strong> 분할 발행</span></div>`);
             
-            if (sellOrder.quantity > buyOrder.quantity) {
-                newSellOrders.push({ side: "Sell", type: "LOC", price: sellOrder.price, quantity: sellOrder.quantity - buyOrder.quantity });
+            if (remainSell > 0) {
+                newSellOrders.push({ side: "Sell", type: "LOC", price: sellOrder.price, quantity: remainSell });
             }
             buyOrder.quantity = 0;
         } else {
+            let remainBuy = buyOrder.quantity - sellOrder.quantity;
             newBuyOrders.push({ side: "Buy", type: "LOC", price: sellOrder.price - 0.01, quantity: sellOrder.quantity });
             matchedLocQty += sellOrder.quantity;
-            buyOrder.quantity -= sellOrder.quantity;
             
-            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">LOC MATCH</span> 최저가 <strong>$${sellOrder.price.toFixed(2)}</strong> 매도 <strong>${sellOrder.quantity}개</strong> 상쇄. (남은 매수: <strong>${buyOrder.quantity}개</strong>)</div>`);
+            logs.push(`<div class="log-box match">↳ <span class="badge bg-sell">LOC MATCH</span> 매도 수량(${sellOrder.quantity}개)이 매수보다 적어 매도 전량 상쇄 완료.<br><span style="color:#94a3b8; font-size:12px; margin-top:4px; display:inline-block;">※ 계산: 매수(${buyOrder.quantity}) - LOC 매도(${sellOrder.quantity}) = 남은 매수 잔량 <strong>${remainBuy}개</strong> 분할 유지</span></div>`);
+            
+            buyOrder.quantity = remainBuy;
         }
     }
 
     // --- STEP 4: 잔량 처리 및 안전 주문 생성 ---
     logs.push(`<div class="log-box" style="border-left-color: #10b981; margin-top: 15px;">
-        <strong style="color:#10b981; font-size: 14px;">[4단계: 최종 정산 및 안전 마진(Lock) 적용]</strong><br>
-        <span style="font-size: 12px; color: #94a3b8;">내부에서 상쇄(퉁치기)된 물량들이 실제 시장에서 어긋나지 않고 최우선으로 상호 체결되도록 가격에 안전장치를 겁니다.</span>
+        <strong style="color:#10b981; font-size: 14px;">[4단계: 최종 정산 및 분할 발행]</strong><br>
+        <span style="font-size: 12px; color: #94a3b8;">수량 차이로 인해 쪼개진 물량들을 재배치하고, 상쇄된 물량에는 우선 체결을 위한 안전 마진(±$0.01)을 적용합니다.</span>
     </div>`);
     
     let totalMatched = matchedMocQty + matchedLocQty;
@@ -515,7 +525,6 @@ function executeNettingAlgorithm() {
         let adjPrice = buyOrder.price + 0.01;
         newSellOrders.push({ side: "Sell", type: "LOC", price: adjPrice, quantity: totalMatched });
         
-        // 퉁쳐진 물량 구성 내역 생성
         let breakdownParts = [];
         if (matchedMocQty > 0) breakdownParts.push(`MOC ${matchedMocQty}개`);
         if (matchedLocQty > 0) breakdownParts.push(`LOC ${matchedLocQty}개`);
@@ -523,37 +532,35 @@ function executeNettingAlgorithm() {
 
         logs.push(`<div class="log-box final" style="border-left-color: #3b82f6; padding-top: 12px; padding-bottom: 12px;">
             <strong style="color: #3b82f6;"><i class="fa-solid fa-shield-halved"></i> 상쇄된 매도 물량 통합 (Sell Lock)</strong><br>
-            <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ 퉁쳐진 매도 물량 총 <strong>${totalMatched}개</strong>${breakdownText}를 하나로 묶습니다.</span><br>
-            <span style="color:#cbd5e1;">↳ 기준 매수가($${buyOrder.price.toFixed(2)})보다 <strong>+$0.01</strong> 높여 <strong>안전 매도($${adjPrice.toFixed(2)})</strong>로 발행하여 시장 노출 시 체결을 보장합니다.</span>
+            <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ 각 단계에서 퉁쳐진 매도 물량 총 <strong>${totalMatched}개</strong>${breakdownText}를 하나로 묶습니다.</span><br>
+            <span style="color:#cbd5e1;">↳ 체결 보장을 위해 매수가($${buyOrder.price.toFixed(2)})보다 <strong>+$0.01</strong> 높인 <strong>안전 매도($${adjPrice.toFixed(2)})</strong>로 일괄 발행합니다.</span>
         </div>`);
 
         logs.push(`<div class="log-box final" style="border-left-color: #ef4444; padding-top: 12px; padding-bottom: 12px;">
-            <strong style="color: #ef4444;"><i class="fa-solid fa-shield-halved"></i> 상쇄된 매수 물량 쪼개기 (Buy Lock)</strong><br>
-            <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ (3단계 결과) 각각 짝지어진 매도자들의 원래 가격보다 <strong>-$0.01</strong>씩 낮게 설정된 개별 <strong>안전 매수</strong>들로 분할되어 발행됩니다.</span>
+            <strong style="color: #ef4444;"><i class="fa-solid fa-shield-halved"></i> 개별 안전 매수 생성 (Buy Lock)</strong><br>
+            <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ 상쇄에 참여한 각 매도 주문의 원본 가격을 추적하여, 해당 가격에서 <strong>-$0.01</strong> 낮춘 가격으로 매수 주문을 생성합니다. 여러 가격대와 상쇄되었다면 매수 물량 역시 가격별로 여러 개로 <strong>쪼개져서 발행</strong>됩니다.</span>
         </div>`);
     } else {
         logs.push(`<div class="log-box">↳ 퉁쳐진(상쇄된) 물량이 없어 안전 마진이 적용되지 않았습니다.</div>`);
     }
 
+    logs.push(`<div class="log-box" style="border-left-color: #64748b; padding-top: 12px; padding-bottom: 12px;">
+        <strong style="color: #94a3b8;"><i class="fa-solid fa-box-open"></i> 잔여 물량 분할 유지 (Remainder)</strong><br>
+        <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ 1~3단계의 계산(수량 뺄셈) 결과 쪼개지고 남은 <strong>매도 잔량</strong>이나 <strong>매수 잔량</strong>은 원본 가격과 타입을 그대로 유지한 채 최종 주문표에 등록됩니다.</span>
+    </div>`);
+
     if (buyOrder.quantity > 0) {
         newBuyOrders.push({ side: "Buy", type: "LOC", price: buyOrder.price, quantity: buyOrder.quantity });
-        logs.push(`<div class="log-box" style="border-left-color: #64748b; padding-top: 12px; padding-bottom: 12px;">
-            <strong style="color: #94a3b8;"><i class="fa-solid fa-box-open"></i> 남은 매수 잔량 (Remain)</strong><br>
-            <span style="color:#cbd5e1; display:inline-block; margin-top:4px;">↳ 퉁치지 못하고 남은 짝 없는 매수 <strong>${buyOrder.quantity}개</strong>는 원본 가격($${buyOrder.price.toFixed(2)})을 그대로 유지합니다.</span>
-        </div>`);
     }
 
-    // 4. 화면 출력 (약간의 딜레이로 연산 체감 효과)
+    // 4. 화면 출력
     setTimeout(() => {
-        // 흐름 로그 렌더링
         flowLog.innerHTML = logs.join('');
         statusBadge.innerHTML = '<i class="fa-solid fa-check"></i> 처리 완료';
         statusBadge.style.color = '#6366f1';
 
-        // 결과 테이블 렌더링
         let html = '';
         
-        // 매도 출력 (내림차순, MOC 텍스트 주황색 강조)
         newSellOrders.sort((a,b) => b.price - a.price).forEach(o => {
             let pStr = o.type === "MOC" ? "MKT" : `$${o.price.toFixed(2)}`;
             let typeStr = o.type === "MOC" ? `<span style="color: #f59e0b; font-weight: 800;">MOC</span>` : o.type;
@@ -565,7 +572,6 @@ function executeNettingAlgorithm() {
             </tr>`;
         });
         
-        // 매수 출력 (내림차순)
         newBuyOrders.sort((a,b) => b.price - a.price).forEach(o => {
             html += `<tr>
                 <td><span class="badge bg-buy">BUY</span> <span style="font-size:12px; color:#94a3b8;">${o.type}</span></td>
